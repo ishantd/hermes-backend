@@ -4,6 +4,7 @@ from pathlib import Path
 from tempfile import gettempdir
 
 from pydantic_settings import BaseSettings
+from yarl import URL
 
 from app import constants
 
@@ -22,6 +23,14 @@ class Settings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8000
     secret_key: str = "this-is-a-secret"
+
+    # database
+    db_name: str = "hermes"
+    db_user: str = "hermes"
+    db_password: str = "password"
+    db_host: str = "localhost"
+    db_port: int = "5432"
+    db_echo: bool = False
 
     # basics
     env: str = constants.PRODUCTION
@@ -43,6 +52,22 @@ class Settings(BaseSettings):
             return "https://hermes-api.ishantdahiya.com"
         else:
             return "http://127.0.0.1:8000"
+
+    @property
+    def db_url(self) -> URL:
+        """
+        Assemble database URL from settings.
+
+        :return: database URL.
+        """
+        return URL.build(
+            scheme="postgresql",
+            path=f"/{self.db_name}",
+            host=self.db_host,
+            port=self.db_port,
+            user=self.db_user,
+            password=self.db_password,
+        )
 
     class Config:
         env_file = ".env"
