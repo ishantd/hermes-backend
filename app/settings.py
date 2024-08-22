@@ -97,6 +97,12 @@ def _parse_env() -> str:
 def _get_settings():
     os_env = _parse_env()
     settings = Settings(env=os_env)
+    if settings.env == constants.TESTING:
+        settings = Settings(
+            env=os_env,
+            db_name="hermes_test",
+            db_user="hermes",
+        )
     return settings
 
 
