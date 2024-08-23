@@ -1,0 +1,51 @@
+name: hermes tests are run here
+
+on:
+  push:
+    branches:
+    - main
+
+# make it so that we can cancel a workflow run if a new one is started for the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Start PostgreSQL
+      run: |
+        docker run -d --name postgres --env POSTGRES_USER=hermes --env POSTGRES_PASSWORD=password --env POSTGRES_DB=hermes_test --publish 5432:5432 postgres:16 -c max_locks_per_transaction=1024 -c max_connections=300
+    - uses: actions/checkout@v3
+    - name: Setup Python
+      id: setup_python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    - name: Extract major.minor Python version
+      id: extract_version
+      run: echo "PYTHON_VERSION=$(cut -d '.' -f 1,2 <<< "${{ steps.setup_python.outputs.python-version }}")" >> $GITHUB_OUTPUT
+    - name: Check cache for dependencies
+      id: python_cache
+      uses: actions/cache@v3
+      with:
+        path: venv
+        key: pip-${{ steps.extract_version.outputs.PYTHON_VERSION }}-${{ hashFiles('requirements.txt') }}
+    - name: Install dependencies
+      if: steps.python_cache.outputs.cache-hit != 'true'
+      run: |
+        if [ -d "venv" ]; then rm -rf venv; fi
+        python3 -m venv venv
+        venv/bin/python3 -m pip install -r requirements.txt
+    - name: Run pytest check
+      run: PYTHONPATH=. venv/bin/python3 -m pytest -v .
+      env:
+        PYTHONDONTWRITEBYTECODE: 1
+        ENV: "TESTING"
+        HOST: "0.0.0.0"
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_NAME: hermes_test
+        DB_USER: hermes
+        DB_PASSWORD: password
