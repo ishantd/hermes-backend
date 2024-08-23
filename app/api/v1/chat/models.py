@@ -23,3 +23,12 @@ class ChatMessage(Base):
     sender_type = Column(Enum(SenderType), nullable=False, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     message = Column(String, nullable=False)
+
+
+class ChatContextPrompt(Base):
+    __tablename__ = "chat_context_prompts"
+    __table_args__ = ()
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    prompt = Column(String, nullable=False)

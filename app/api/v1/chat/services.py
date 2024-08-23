@@ -3,12 +3,13 @@ from fastapi.logger import logger
 from sqlalchemy.orm import Session
 
 from app.api.v1.auth.models import User
-from app.api.v1.chat.models import ChatMessage, SenderType
+from app.api.v1.chat.models import ChatContextPrompt, ChatMessage, SenderType
 from app.api.v1.chat.schemas import (
     ChatHistoryResponseSchema,
     ChatMessageResponseSchema,
     SendMessageResponseSchema,
 )
+from app.constants import SYSTEM_CHATBOT_PROMPT
 from app.settings import settings
 from app.utils.openai import get_response_from_gpt_with_context
 
@@ -28,15 +29,22 @@ def generate_response_using_gpt(
         .all()
     )
 
+    system_context = [
+        {
+            "role": "system",
+            "content": SYSTEM_CHATBOT_PROMPT,
+        },
+    ]
+
     messages = [
         {
-            "role": "system" if message.sender_type == SenderType.SYSTEM else "user",
+            "role": "assistant" if message.sender_type == SenderType.SYSTEM else "user",
             "content": message.message,
         }
         for message in chat_history
     ]
 
-    return get_response_from_gpt_with_context(messages)
+    return get_response_from_gpt_with_context(messages=system_context + messages)
 
 
 def generate_system_response(
@@ -224,3 +232,17 @@ def update_chat_message(
         user=user,
         session=session,
     )
+
+
+def get_chat_context_prompts(
+    session: Session,
+) -> list[ChatContextPrompt]:
+    """
+    Get chat context prompts.
+    """
+    log_prefix = "[Chat Context Prompts]"
+    logger.info(
+        f"{log_prefix} Attempting to get chat context prompts.",
+    )
+
+    return session.query(ChatContextPrompt).all()
