@@ -127,7 +127,7 @@ def user_client(
 ) -> Generator[TestClient, None, None]:
     """Fixture that creates client for requesting server as a basic user."""
     with TestClient(fastapi_app) as authed_client:
-        user = create_basic_user(dbsession=dbsession)
+        user, _ = create_basic_user(dbsession=dbsession)
 
         # hack to store user in client
         authed_client.user = user
