@@ -8,8 +8,10 @@ from sqlalchemy.engine import Engine, make_url
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.api.app import get_app
+from app.api.v1.auth import services as auth_services
 from app.database import db
 from app.settings import settings
+from app.tests.utils import create_basic_user
 
 
 def _create_database() -> None:
@@ -116,3 +118,23 @@ def client(fastapi_app: FastAPI) -> Generator[TestClient, None, None]:
     """Fixture that creates client for requesting server."""
     with TestClient(fastapi_app) as client:
         yield client
+
+
+@pytest.fixture
+def user_client(
+    fastapi_app: FastAPI,
+    dbsession: Session,
+) -> Generator[TestClient, None, None]:
+    """Fixture that creates client for requesting server as a basic user."""
+    with TestClient(fastapi_app) as authed_client:
+        user = create_basic_user(dbsession=dbsession)
+
+        # hack to store user in client
+        authed_client.user = user
+
+        access_token = auth_services.create_user_access_token(dbsession, user)
+        authed_client.headers = {
+            **authed_client.headers,
+            "Authorization": f"Bearer {access_token}",
+        }
+        yield authed_client

@@ -33,3 +33,8 @@ def test_login(client: TestClient, dbsession: Session):
 
     assert response.status_code == status.HTTP_200_OK
     assert response.json()["email"] == user.email
+
+
+def test_whoami(user_client: TestClient):
+    response = user_client.get("/v1/auth/whoami")
+    assert response.status_code == status.HTTP_200_OK

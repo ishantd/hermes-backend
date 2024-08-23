@@ -173,7 +173,9 @@ def decode_auth_token(token: str) -> Optional[UserResponseSchema]:
 
 def get_auth_token_data(request: Request) -> UserResponseSchema:
     """Get authentication token data from the request."""
-    token = request.cookies.get(constants.AUTH_TOKEN_NAME)
+    token = request.cookies.get(constants.AUTH_TOKEN_NAME) or request.headers.get(
+        "Authorization",
+    ).replace("Bearer ", "")
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
