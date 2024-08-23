@@ -1,3 +1,4 @@
+from fastapi import HTTPException, status
 from fastapi.logger import logger
 from sqlalchemy.orm import Session
 
@@ -99,10 +100,72 @@ def get_chat_history(
             sender_type=message.sender_type.value,
             message=message.message,
             timestamp=message.created_at.timestamp(),
+            updated_at=message.updated_at.timestamp() if message.updated_at else None,
         )
         for message in chat_messages
     ]
 
     return ChatHistoryResponseSchema(
         messages=chat_history,
+    )
+
+
+def delete_chat_history(
+    user: User,
+    message_id: int,
+    delete_all: bool,
+    session: Session,
+) -> ChatHistoryResponseSchema:
+    """
+    Delete chat history.
+    """
+    log_prefix = "[Chat History]"
+    logger.info(
+        f"{log_prefix} Attempting to delete chat history for user: {user.email}",
+    )
+
+    if delete_all:
+        session.query(ChatMessage).filter(ChatMessage.user_id == user.id).delete()
+    else:
+        session.query(ChatMessage).filter(ChatMessage.id == message_id).delete()
+
+    session.commit()
+
+    return get_chat_history(
+        user=user,
+        session=session,
+    )
+
+
+def update_chat_message(
+    user: User,
+    message_id: int,
+    new_message: str,
+    session: Session,
+) -> ChatHistoryResponseSchema:
+    """
+    Update chat history.
+    """
+    log_prefix = "[Chat History]"
+    logger.info(
+        f"{log_prefix} Attempting to update chat history for user: {user.email}",
+    )
+
+    chat_message = (
+        session.query(ChatMessage).filter(ChatMessage.id == message_id).first()
+    )
+
+    if not chat_message:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Message not found.",
+        )
+
+    chat_message.message = new_message
+
+    session.commit()
+
+    return get_chat_history(
+        user=user,
+        session=session,
     )
