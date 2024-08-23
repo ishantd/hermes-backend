@@ -12,3 +12,8 @@ class SendMessageSchema(BaseChatMessage):
 class ChatMessageResponseSchema(BaseChatMessage):
     id: int
     sender_type: str
+    timestamp: float
+
+
+class ChatHistoryResponseSchema(BaseModel):
+    messages: list[ChatMessageResponseSchema]

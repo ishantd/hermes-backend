@@ -34,10 +34,15 @@ def process_response_for_chat_message(
     session.add(system_message)
     session.commit()
 
+    session.refresh(system_message)
+
+    timestamp = system_message.created_at.timestamp()
+
     return ChatMessageResponseSchema(
         id=system_message.id,
         sender_type=system_message.sender_type.value,
         message=system_message.message,
+        timestamp=timestamp,
     )
 
 
