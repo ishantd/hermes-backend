@@ -36,6 +36,13 @@ class Settings(BaseSettings):
     env: str = constants.PRODUCTION
     debug: bool = False
 
+    # openai
+    openai_api_key: str = ""
+
+    @property
+    def is_openai_enabled(self) -> bool:
+        return bool(self.openai_api_key)
+
     @property
     def frontend_url(self):
         """

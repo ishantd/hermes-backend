@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 from app.api.v1.auth.models import User
 from app.api.v1.chat.models import ChatMessage, SenderType
 from app.api.v1.chat.schemas import ChatHistoryResponseSchema, ChatMessageResponseSchema
+from app.settings import settings
+from app.utils.openai import get_response_from_gpt
 
 
 def generate_system_response(
@@ -13,6 +15,10 @@ def generate_system_response(
     """
     Generate a system response.
     """
+
+    if settings.is_openai_enabled:
+        return get_response_from_gpt(message)
+
     return f"System says: {message}"
 
 
