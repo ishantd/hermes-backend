@@ -89,7 +89,7 @@ def get_chat_history(
     chat_messages = (
         session.query(ChatMessage)
         .filter(ChatMessage.user_id == user.id)
-        .order_by(ChatMessage.id.desc())
+        .order_by(ChatMessage.id.asc())
         .all()
     )
 
