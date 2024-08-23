@@ -23,12 +23,8 @@ class User(Base):
         name: str,
     ):
         self.email = email
-        if password:
-            self.password = generate_password_hash(password)
+        self.password = generate_password_hash(password)
         self.name = name.title()
-
-    def __repr__(self) -> str:
-        return f"User {self.id}: {self.email}"
 
 
 def generate_password_hash(password: str) -> str:
