@@ -37,7 +37,7 @@ jobs:
       run: |
         if [ -d "venv" ]; then rm -rf venv; fi
         python3 -m venv venv
-        venv/bin/python3 -m pip install -r requirements.txt
+        venv/bin/python3 -m pip install -r requirements-dev.txt
     - name: Run pytest check
       run: PYTHONPATH=. venv/bin/python3 -m pytest -v .
       env:
