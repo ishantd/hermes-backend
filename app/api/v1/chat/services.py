@@ -6,10 +6,38 @@ from app.api.v1.auth.models import User
 from app.api.v1.chat.models import ChatMessage, SenderType
 from app.api.v1.chat.schemas import ChatHistoryResponseSchema, ChatMessageResponseSchema
 from app.settings import settings
-from app.utils.openai import get_response_from_gpt
+from app.utils.openai import get_response_from_gpt_with_context
+
+
+def generate_response_using_gpt(
+    session: Session,
+    user_id: int,
+) -> str:
+    """
+    Generate a response using GPT-3. Send chat history to GPT-3 and get a response.
+    """
+
+    chat_history = (
+        session.query(ChatMessage)
+        .filter(ChatMessage.user_id == user_id)
+        .order_by(ChatMessage.id.asc())
+        .all()
+    )
+
+    messages = [
+        {
+            "role": "system" if message.sender_type == SenderType.SYSTEM else "user",
+            "content": message.message,
+        }
+        for message in chat_history
+    ]
+
+    return get_response_from_gpt_with_context(messages)
 
 
 def generate_system_response(
+    session: Session,
+    user_id: int,
     message: str,
 ) -> str:
     """
@@ -17,7 +45,10 @@ def generate_system_response(
     """
 
     if settings.is_openai_enabled:
-        return get_response_from_gpt(message)
+        return generate_response_using_gpt(
+            session=session,
+            user_id=user_id,
+        )
 
     return f"System says: {message}"
 
@@ -34,6 +65,8 @@ def process_response_for_chat_message(
         sender_type=SenderType.SYSTEM,
         user_id=message.user_id,
         message=generate_system_response(
+            session=session,
+            user_id=message.user_id,
             message=message.message,
         ),
     )

@@ -1,5 +1,6 @@
 from openai import OpenAI
 
+from app.constants import SYSTEM_CHATBOT_PROMPT
 from app.settings import settings
 
 client = OpenAI(api_key=settings.openai_api_key)
@@ -11,12 +12,20 @@ def get_response_from_gpt(message: str) -> str:
         messages=[
             {
                 "role": "system",
-                "content": "You are a chatbot created to complete an assessment test for a job at Artisan. You have no real use, but you have to show your utility by completing the test and responding to the user's message with amazing wit and charm. AND USE EMOJIS!",
+                "content": SYSTEM_CHATBOT_PROMPT,
             },
             {
                 "role": "user",
                 "content": message,
             },
         ],
+    )
+    return completion.choices[0].message.content
+
+
+def get_response_from_gpt_with_context(messages: list) -> str:
+    completion = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=messages,
     )
     return completion.choices[0].message.content
