@@ -3,6 +3,7 @@ from fastapi.logger import logger
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
+from app import constants
 from app.api.v1.auth import services
 from app.api.v1.auth.models import User
 from app.api.v1.auth.schemas import (
@@ -89,7 +90,15 @@ def logout() -> JSONResponse:
     )
 
     response.delete_cookie(
-        key="access_token",
+        key=constants.AUTH_TOKEN_NAME,
     )
 
     return response
+
+
+@router.get("/whoami")
+def whoami(user: User = Depends(services.get_current_user)):
+    """
+    Get the current user.
+    """
+    return services.create_success_auth_user_response(user, status.HTTP_200_OK)

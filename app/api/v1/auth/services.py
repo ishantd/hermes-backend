@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import jwt
-from fastapi import HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.logger import logger
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
@@ -15,6 +15,7 @@ from app.api.v1.auth.schemas import (
     UserResponseSchema,
     UserSignupSchema,
 )
+from app.database import db
 from app.settings import settings
 
 ALGORITHM = "HS256"
@@ -146,7 +147,7 @@ def create_success_auth_user_response(user: User, status_code: int) -> JSONRespo
     )
     access_token = create_user_access_token(user)
     response.set_cookie(
-        key="access_token",
+        key=constants.AUTH_TOKEN_NAME,
         value=access_token,
         httponly=True,
         samesite="none",
@@ -156,3 +157,46 @@ def create_success_auth_user_response(user: User, status_code: int) -> JSONRespo
         ).replace(tzinfo=timezone.utc),
     )
     return response
+
+
+def decode_auth_token(token: str) -> Optional[UserResponseSchema]:
+    """Decode the JWT token to get user details."""
+    try:
+        payload = jwt.decode(token, settings.secret_key, algorithms=[ALGORITHM])
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
+        return None
+
+    return UserResponseSchema(**payload)
+
+
+def get_auth_token_data(request: Request) -> UserResponseSchema:
+    """Get authentication token data from the request."""
+    token = request.cookies.get(constants.AUTH_TOKEN_NAME)
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing authentication token",
+        )
+    token_data = decode_auth_token(token)
+    if not token_data:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid authentication token or token has expired",
+        )
+    return token_data
+
+
+def get_current_user(request: Request, session: Session = Depends(db)) -> User:
+    """Get the current authenticated user or raise an HTTP exception."""
+    token_data = get_auth_token_data(request)
+    user = None
+    if token_data and token_data.user_id:
+        user = User.get(session, token_data.user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="We couldn't find the user associated with this token, we have logged you out.",
+        )
+    return user

@@ -8,7 +8,7 @@ from sqlalchemy import MetaData, Table, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, as_declarative, scoped_session, sessionmaker
 from sqlalchemy.sql.schema import Column
-from sqlalchemy.sql.sqltypes import Boolean, DateTime
+from sqlalchemy.sql.sqltypes import DateTime
 
 from app.settings import settings
 
@@ -84,7 +84,6 @@ class Base:
         default=datetime.datetime.now(),
         onupdate=datetime.datetime.now(),
     )
-    is_deleted = Column(Boolean, nullable=False, default=False)
 
     @classmethod
     def get(cls: Type[Self], session: Session, ident: Any) -> Self:
