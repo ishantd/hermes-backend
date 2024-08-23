@@ -6,7 +6,7 @@ class BaseChatMessage(BaseModel):
 
 
 class SendMessageSchema(BaseChatMessage):
-    pass
+    context_id: int = None
 
 
 class ChatMessageResponseSchema(BaseChatMessage):

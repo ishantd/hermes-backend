@@ -17,6 +17,7 @@ from app.utils.openai import get_response_from_gpt_with_context
 def generate_response_using_gpt(
     session: Session,
     user_id: int,
+    context_id: int = None,
 ) -> str:
     """
     Generate a response using GPT-3. Send chat history to GPT-3 and get a response.
@@ -29,10 +30,17 @@ def generate_response_using_gpt(
         .all()
     )
 
+    system_prompt = SYSTEM_CHATBOT_PROMPT
+
+    if context_id:
+        chat_context = ChatContextPrompt.get(session, context_id)
+        if chat_context:
+            system_prompt = chat_context.prompt
+
     system_context = [
         {
             "role": "system",
-            "content": SYSTEM_CHATBOT_PROMPT,
+            "content": system_prompt,
         },
     ]
 
@@ -68,6 +76,7 @@ def generate_system_response(
 def process_response_for_chat_message(
     message: ChatMessage,
     session: Session,
+    context_id: int = None,
 ) -> ChatMessageResponseSchema:
     """
     Process a chat message response.
@@ -80,6 +89,7 @@ def process_response_for_chat_message(
             session=session,
             user_id=message.user_id,
             message=message.message,
+            context_id=context_id,
         ),
     )
 
@@ -102,6 +112,7 @@ def receive_chatbot_message(
     user: User,
     message: str,
     session: Session,
+    context_id: int = None,
 ) -> SendMessageResponseSchema:
     """
     Receive a message from the chatbot.
@@ -123,6 +134,7 @@ def receive_chatbot_message(
     bot_message = process_response_for_chat_message(
         message=chat_message,
         session=session,
+        context_id=context_id,
     )
 
     user_message = ChatMessageResponseSchema(
