@@ -60,6 +60,7 @@ def generate_system_response(
     session: Session,
     user_id: int,
     message: str,
+    context_id: int = None,
 ) -> str:
     """
     Generate a system response.
@@ -69,6 +70,7 @@ def generate_system_response(
         return generate_response_using_gpt(
             session=session,
             user_id=user_id,
+            context_id=context_id,
         )
 
     return f"System says: {message}"
