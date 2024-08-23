@@ -6,8 +6,8 @@ from app.api.v1.auth.services import get_current_user
 from app.api.v1.chat import services
 from app.api.v1.chat.schemas import (
     ChatHistoryResponseSchema,
-    ChatMessageResponseSchema,
     DeleteMessageSchema,
+    SendMessageResponseSchema,
     SendMessageSchema,
     UpdateMessageSchema,
 )
@@ -21,7 +21,7 @@ def send_message(
     payload: SendMessageSchema,
     current_user: User = Depends(get_current_user),
     session: Session = Depends(db),
-) -> ChatMessageResponseSchema:
+) -> SendMessageResponseSchema:
     """
     Send a message.
     """

@@ -16,6 +16,11 @@ class ChatMessageResponseSchema(BaseChatMessage):
     updated_at: float = None
 
 
+class SendMessageResponseSchema(BaseModel):
+    user_message: ChatMessageResponseSchema
+    bot_message: ChatMessageResponseSchema
+
+
 class ChatHistoryResponseSchema(BaseModel):
     messages: list[ChatMessageResponseSchema]
 

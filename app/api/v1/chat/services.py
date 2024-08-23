@@ -4,7 +4,11 @@ from sqlalchemy.orm import Session
 
 from app.api.v1.auth.models import User
 from app.api.v1.chat.models import ChatMessage, SenderType
-from app.api.v1.chat.schemas import ChatHistoryResponseSchema, ChatMessageResponseSchema
+from app.api.v1.chat.schemas import (
+    ChatHistoryResponseSchema,
+    ChatMessageResponseSchema,
+    SendMessageResponseSchema,
+)
 from app.settings import settings
 from app.utils.openai import get_response_from_gpt_with_context
 
@@ -90,7 +94,7 @@ def receive_chatbot_message(
     user: User,
     message: str,
     session: Session,
-) -> ChatMessageResponseSchema:
+) -> SendMessageResponseSchema:
     """
     Receive a message from the chatbot.
     """
@@ -108,9 +112,21 @@ def receive_chatbot_message(
     session.add(chat_message)
     session.commit()
 
-    return process_response_for_chat_message(
+    bot_message = process_response_for_chat_message(
         message=chat_message,
         session=session,
+    )
+
+    user_message = ChatMessageResponseSchema(
+        id=chat_message.id,
+        sender_type=chat_message.sender_type.value,
+        message=chat_message.message,
+        timestamp=chat_message.created_at.timestamp(),
+    )
+
+    return SendMessageResponseSchema(
+        user_message=user_message,
+        bot_message=bot_message,
     )
 
 
