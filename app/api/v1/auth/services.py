@@ -1,12 +1,20 @@
+from datetime import datetime, timedelta, timezone
+from typing import Optional
+
 import jwt
 from fastapi import HTTPException, status
 from fastapi.logger import logger
+from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app import constants
 from app.api.v1.auth.models import User
-from app.api.v1.auth.schemas import UserResponseSchema, UserSignupSchema
+from app.api.v1.auth.schemas import (
+    UserLoginSchema,
+    UserResponseSchema,
+    UserSignupSchema,
+)
 from app.settings import settings
 
 ALGORITHM = "HS256"
@@ -54,6 +62,38 @@ def signup(
     return user
 
 
+def login(
+    payload: UserLoginSchema,
+    session: Session,
+) -> User:
+    """
+    Log in a user.
+    """
+
+    log_prefix = "[User Login]"
+    logger.info(
+        f"{log_prefix} Attempting to log in user: {payload.email}",
+    )
+
+    user: Optional[User] = (
+        session.query(User).filter(User.email == payload.email).first()
+    )
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        )
+
+    if not user.check_password(payload.password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect password.",
+        )
+
+    return user
+
+
 def create_jwt_with_expiry(
     data: dict,
 ) -> str:
@@ -92,3 +132,27 @@ def create_user_access_token(
     )
 
     return create_jwt_with_expiry(jwt_payload.model_dump())
+
+
+def create_success_auth_user_response(user: User, status_code: int) -> JSONResponse:
+    user_response = UserResponseSchema(
+        user_id=user.id,
+        email=user.email,
+        name=user.name,
+    )
+    response = JSONResponse(
+        status_code=status_code,
+        content=user_response.model_dump(),
+    )
+    access_token = create_user_access_token(user)
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        samesite="none",
+        secure=True,
+        expires=(
+            datetime.utcnow() + timedelta(days=constants.ACCESS_TOKEN_EXPIRY_DAYS)
+        ).replace(tzinfo=timezone.utc),
+    )
+    return response

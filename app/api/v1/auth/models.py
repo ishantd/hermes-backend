@@ -26,6 +26,10 @@ class User(Base):
         self.password = generate_password_hash(password)
         self.name = name.title()
 
+    def check_password(self, password: str) -> bool:
+        """Check if the given password is correct."""
+        return bcrypt.checkpw(password.encode("ascii"), self.password.encode("ascii"))
+
 
 def generate_password_hash(password: str) -> str:
     """Bcrypts a password, returns a hash string"""

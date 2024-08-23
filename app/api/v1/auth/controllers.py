@@ -1,14 +1,15 @@
-from datetime import datetime, timedelta, timezone
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.logger import logger
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
-from app import constants
 from app.api.v1.auth import services
 from app.api.v1.auth.models import User
-from app.api.v1.auth.schemas import UserResponseSchema, UserSignupSchema
+from app.api.v1.auth.schemas import (
+    UserLoginSchema,
+    UserResponseSchema,
+    UserSignupSchema,
+)
 from app.database import db
 
 router = APIRouter()
@@ -40,28 +41,55 @@ def signup(
             detail=str(e),
         )
 
-    user_response = UserResponseSchema(
-        user_id=user.id,
-        email=user.email,
-        name=user.name,
+    response = services.create_success_auth_user_response(user, status.HTTP_201_CREATED)
+
+    return response
+
+
+@router.post("/login")
+def login(
+    payload: UserLoginSchema,
+    session: Session = Depends(db),
+) -> UserResponseSchema:
+    """
+    Log in a user.
+    """
+
+    logger.info(
+        f"[User Login] Attempting to log in user: {payload.email}",
     )
+    try:
+        user: User = services.login(
+            payload=payload,
+            session=session,
+        )
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        logger.error(f"[User Login] {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e),
+        )
+
+    response = services.create_success_auth_user_response(user, status.HTTP_200_OK)
+
+    return response
+
+
+@router.post("/logout")
+def logout() -> JSONResponse:
+    """
+    Log out a user.
+    """
 
     response = JSONResponse(
-        status_code=status.HTTP_201_CREATED,
-        content=user_response.model_dump(),
+        status_code=status.HTTP_200_OK,
+        content={"message": "Logged out."},
     )
 
-    access_token = services.create_user_access_token(user)
-
-    response.set_cookie(
+    response.delete_cookie(
         key="access_token",
-        value=access_token,
-        httponly=True,
-        samesite="none",
-        secure=True,
-        expires=(
-            datetime.utcnow() + timedelta(days=constants.ACCESS_TOKEN_EXPIRY_DAYS)
-        ).replace(tzinfo=timezone.utc),
     )
 
     return response
