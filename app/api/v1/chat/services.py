@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.api.v1.auth.models import User
 from app.api.v1.chat.models import ChatContextPrompt, ChatMessage, SenderType
 from app.api.v1.chat.schemas import (
+    ChatContextPromptSchema,
     ChatHistoryResponseSchema,
     ChatMessageResponseSchema,
     SendMessageResponseSchema,
@@ -248,7 +249,7 @@ def update_chat_message(
 
 def get_chat_context_prompts(
     session: Session,
-) -> list[ChatContextPrompt]:
+) -> list[ChatContextPromptSchema]:
     """
     Get chat context prompts.
     """
@@ -257,4 +258,13 @@ def get_chat_context_prompts(
         f"{log_prefix} Attempting to get chat context prompts.",
     )
 
-    return session.query(ChatContextPrompt).all()
+    contexts = session.query(ChatContextPrompt).all()
+
+    return [
+        ChatContextPromptSchema(
+            id=context.id,
+            title=context.title,
+            prompt=context.prompt,
+        )
+        for context in contexts
+    ]

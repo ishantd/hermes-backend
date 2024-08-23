@@ -32,3 +32,9 @@ class DeleteMessageSchema(BaseModel):
 
 class UpdateMessageSchema(BaseChatMessage):
     message_id: int
+
+
+class ChatContextPromptSchema(BaseModel):
+    id: int
+    title: str
+    prompt: str

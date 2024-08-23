@@ -4,8 +4,8 @@ from sqlalchemy.orm import Session
 from app.api.v1.auth.models import User
 from app.api.v1.auth.services import get_current_user
 from app.api.v1.chat import services
-from app.api.v1.chat.models import ChatContextPrompt
 from app.api.v1.chat.schemas import (
+    ChatContextPromptSchema,
     ChatHistoryResponseSchema,
     DeleteMessageSchema,
     SendMessageResponseSchema,
@@ -117,7 +117,7 @@ def delete_chat_history(
 def get_chat_context_prompts(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(db),
-) -> list[ChatContextPrompt]:
+) -> list[ChatContextPromptSchema]:
     """
     Get chat context prompts.
     """
