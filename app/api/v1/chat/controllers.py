@@ -37,6 +37,7 @@ def send_message(
         user=current_user,
         message=payload.message,
         session=session,
+        context_id=payload.context_id,
     )
 
     return response
