@@ -132,7 +132,7 @@ def user_client(
         # hack to store user in client
         authed_client.user = user
 
-        access_token = auth_services.create_user_access_token(dbsession, user)
+        access_token = auth_services.create_user_access_token(user)
         authed_client.headers = {
             **authed_client.headers,
             "Authorization": f"Bearer {access_token}",
