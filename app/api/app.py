@@ -3,7 +3,6 @@ from fastapi.responses import UJSONResponse
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
-import app.constants as constants
 from app.api.v1.router import api_router
 from app.settings import settings
 
@@ -31,8 +30,9 @@ def get_app() -> FastAPI:
         settings.frontend_url,
     ]
 
-    if settings.env in [constants.DEVELOPMENT, constants.TESTING]:
-        allowed_origins.append("http://localhost:3000")
+    allowed_origins.append(
+        "http://localhost:3000",
+    )  # for development -- not recommended for production
 
     default_headers_allowed = ["Content-Type", "Authorization", "X-Workspace-Code"]
 
