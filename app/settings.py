@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     """
 
     # fastapi + uvicorn
-    workers_count: int = 1  # quantity of workers for uvicorn
+    workers_count: int = 4  # quantity of workers for uvicorn
     reload: bool = False  # Enable uvicorn reloading
     proxy_headers: bool = True  # Enable proxy headers for uvicorn
     host: str = "0.0.0.0"
