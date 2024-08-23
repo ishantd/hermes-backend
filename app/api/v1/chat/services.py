@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.api.v1.auth.models import User
 from app.api.v1.chat.models import ChatMessage, SenderType
-from app.api.v1.chat.schemas import ChatMessageResponseSchema
+from app.api.v1.chat.schemas import ChatHistoryResponseSchema, ChatMessageResponseSchema
 
 
 def generate_system_response(
@@ -71,4 +71,38 @@ def receive_chatbot_message(
     return process_response_for_chat_message(
         message=chat_message,
         session=session,
+    )
+
+
+def get_chat_history(
+    user: User,
+    session: Session,
+) -> ChatHistoryResponseSchema:
+    """
+    Get chat history.
+    """
+    log_prefix = "[Chat History]"
+    logger.info(
+        f"{log_prefix} Attempting to get chat history for user: {user.email}",
+    )
+
+    chat_messages = (
+        session.query(ChatMessage)
+        .filter(ChatMessage.user_id == user.id)
+        .order_by(ChatMessage.id.desc())
+        .all()
+    )
+
+    chat_history = [
+        ChatMessageResponseSchema(
+            id=message.id,
+            sender_type=message.sender_type.value,
+            message=message.message,
+            timestamp=message.created_at.timestamp(),
+        )
+        for message in chat_messages
+    ]
+
+    return ChatHistoryResponseSchema(
+        messages=chat_history,
     )

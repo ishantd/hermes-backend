@@ -4,7 +4,11 @@ from sqlalchemy.orm import Session
 from app.api.v1.auth.models import User
 from app.api.v1.auth.services import get_current_user
 from app.api.v1.chat import services
-from app.api.v1.chat.schemas import ChatMessageResponseSchema, SendMessageSchema
+from app.api.v1.chat.schemas import (
+    ChatHistoryResponseSchema,
+    ChatMessageResponseSchema,
+    SendMessageSchema,
+)
 from app.database import db
 
 router = APIRouter()
@@ -29,6 +33,23 @@ def send_message(
     response = services.receive_chatbot_message(
         user=current_user,
         message=payload.message,
+        session=session,
+    )
+
+    return response
+
+
+@router.get("/history")
+def get_chat_history(
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(db),
+) -> ChatHistoryResponseSchema:
+    """
+    Get chat history.
+    """
+
+    response = services.get_chat_history(
+        user=current_user,
         session=session,
     )
 
