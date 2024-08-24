@@ -7,6 +7,9 @@ WORKDIR /app
 # Copy the requirements file into the container
 COPY requirements.txt /app/requirements.txt
 
+# Install the system dependencies
+RUN apt-get update && apt-get -y install libpq-dev gcc
+
 # Install any dependencies
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
@@ -17,4 +20,4 @@ COPY . /app
 EXPOSE 8000
 
 # Command to run the app
-CMD ["uvicorn", "app.__main__:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.api.app:get_app", "--host", "0.0.0.0", "--port", "8000"]
